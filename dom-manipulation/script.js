@@ -1,87 +1,128 @@
 let quotes = [];
 
-// Load quotes from localStorage on page load
+// Load quotes from localStorage
 function loadQuotes() {
-  const stored = localStorage.getItem("quotes");
-  if (stored) {
-    quotes = JSON.parse(stored);
-  } else {
-    quotes = [
-      { text: "To be or not to be.", category: "Philosophy" },
-      { text: "I think, therefore I am.", category: "Philosophy" }
-    ];
-    saveQuotes();
+  const savedQuotes = localStorage.getItem('quotes');
+  if (savedQuotes) {
+    quotes = JSON.parse(savedQuotes);
   }
+  displayQuotes(quotes);
 }
 
-// Save quotes array to localStorage
+// Save quotes to localStorage
 function saveQuotes() {
-  localStorage.setItem("quotes", JSON.stringify(quotes));
+  localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Display notification message to user (simple example)
-function notifyUser(message) {
-  alert(message); // replace with nicer UI in real app
+// Display quotes in the DOM
+function displayQuotes(quotesToDisplay) {
+  const quoteDisplay = document.getElementById('quoteDisplay');
+  quoteDisplay.innerHTML = '';
+
+  quotesToDisplay.forEach(quote => {
+    const p = document.createElement('p');
+    p.textContent = `"${quote.text}" — ${quote.category}`;
+    quoteDisplay.appendChild(p);
+  });
 }
 
-// Fetch quotes from mock API server
+// Add a new quote from user input
+function addQuote() {
+  const textInput = document.getElementById('newQuoteText');
+  const categoryInput = document.getElementById('newQuoteCategory');
+
+  const newQuote = {
+    text: textInput.value.trim(),
+    category: categoryInput.value.trim(),
+  };
+
+  if (newQuote.text === '' || newQuote.category === '') {
+    alert('Please enter both quote and category.');
+    return;
+  }
+
+  quotes.push(newQuote);
+  saveQuotes();
+  displayQuotes(quotes);
+  postQuoteToServer(newQuote);
+
+  // Clear inputs
+  textInput.value = '';
+  categoryInput.value = '';
+}
+
+// Fetch quotes from the mock server
 async function fetchQuotesFromServer() {
-  const apiUrl = "https://jsonplaceholder.typicode.com/posts"; // mock API endpoint
+  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with real or mock endpoint for quotes
   try {
     const response = await fetch(apiUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error('Network response was not ok');
     const serverQuotes = await response.json();
-    // For simulation, just log or do merging logic here
-    // In real app: merge serverQuotes with local quotes array, server data takes precedence
-    console.log("Fetched from server:", serverQuotes);
-    notifyUser("Quotes fetched from server.");
+
+    // Example assumes serverQuotes is an array of quote objects like {text: ..., category: ...}
+    // You may need to adjust depending on the actual API response structure
+    // Merge server quotes with local quotes, prioritizing server data:
+    const mergedQuotes = [...quotes];
+
+    serverQuotes.forEach(sq => {
+      // Simple merge logic: add if not already in local quotes (by text+category)
+      const exists = mergedQuotes.some(
+        q => q.text === sq.text && q.category === sq.category
+      );
+      if (!exists) {
+        mergedQuotes.push(sq);
+      }
+    });
+
+    quotes = mergedQuotes;
+    saveQuotes();
+    displayQuotes(quotes);
   } catch (error) {
-    console.error("Fetch error:", error);
-    notifyUser("Failed to fetch quotes from server.");
+    console.error('Failed to fetch quotes from server:', error);
   }
 }
 
-// Post local quotes to the server (mock API)
-async function postQuotesToServer() {
-  const apiUrl = "https://jsonplaceholder.typicode.com/posts"; // mock API endpoint
+// Post a new quote to the mock server
+async function postQuoteToServer(quote) {
+  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with real or mock endpoint for posting
+
   try {
     const response = await fetch(apiUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(quotes)
+      body: JSON.stringify(quote),
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+
+    if (!response.ok) throw new Error('Network response was not ok');
     const result = await response.json();
-    notifyUser("Quotes posted to server successfully.");
-    console.log("Server response:", result);
-    return result;
+    console.log('Quote posted successfully:', result);
   } catch (error) {
-    console.error("Post error:", error);
-    notifyUser("Failed to post quotes to server.");
+    console.error('Failed to post quote to server:', error);
   }
 }
 
-// Sync quotes: fetch from server and then post local quotes
-async function syncQuotes() {
-  try {
-    await fetchQuotesFromServer();
-    await postQuotesToServer();
-    notifyUser("Quotes synchronized successfully.");
-  } catch (error) {
-    console.error("Sync error:", error);
-    notifyUser("Failed to synchronize quotes.");
-  }
+// Sync quotes initially by fetching from server
+function syncQuotes() {
+  fetchQuotesFromServer();
+}
+
+// Periodically fetch new quotes every 5 minutes (300000 ms)
+function startPeriodicFetch() {
+  // Fetch immediately once on start
+  fetchQuotesFromServer();
+
+  // Then repeat every 5 minutes
+  setInterval(fetchQuotesFromServer, 300000);
 }
 
 // Initialize app on DOM content loaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
   syncQuotes();
+  startPeriodicFetch();
 });
+
+// Expose addQuote to global scope if used inline in HTML
+window.addQuote = addQuote;
