@@ -1,38 +1,31 @@
-# Dynamic Quote Generator - DOM Manipulation Project
+# Dynamic Quote Generator
 
-This project demonstrates **advanced DOM manipulation**, **web storage (localStorage and sessionStorage)**, and **JSON handling** in a vanilla JavaScript web application.
+A JavaScript-based application that allows users to:
 
-## 📌 Project Features
+- Display random quotes
+- Filter by categories
+- Add new quotes dynamically
+- Save quotes using `localStorage`
+- Sync quotes with a simulated server (JSONPlaceholder)
+- Automatically resolve quote conflicts
+- Notify user of sync updates
 
-### ✅ Quote Generator
-- Displays a random quote from an internal array.
-- Quotes are categorized and displayed with their category.
+## Features
 
-### ✅ Add New Quotes
-- Users can add new quotes with a custom category.
-- Newly added quotes are saved in localStorage and persist across sessions.
+- DOM Manipulation (Create, Append, Filter)
+- Web Storage (localStorage)
+- Fetch API Integration
+- Basic Conflict Resolution
+- Real-time Notifications
 
-### ✅ Export Quotes to JSON
-- Download your current list of quotes as a `.json` file with one click.
+## Syncing
+Quotes are periodically synced from a mock server using:
+`https://jsonplaceholder.typicode.com/posts`
 
-### ✅ Import Quotes from JSON
-- Upload a `.json` file of quotes to import and merge with existing ones.
-
-### ✅ SessionStorage
-- Stores the last shown quote temporarily (session only).
-
----
-
-## 🧠 Technologies Used
-- HTML5
-- CSS3 (optional)
-- JavaScript (DOM manipulation, localStorage, sessionStorage, JSON, File API)
+New quotes from the server are automatically added without duplication.
 
 ---
 
-## 🚀 How to Run
+## Run Locally
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/alx_fe_javascript.git
-   cd alx_fe_javascript/dom-manipulation
+Simply open `index.html` in your browser.
