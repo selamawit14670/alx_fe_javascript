@@ -1,52 +1,99 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const quotes = [
-    { text: "The only limit is your mind.", category: "Motivation" },
-    { text: "Code is like humor. When you have to explain it, it’s bad.", category: "Programming" },
-    { text: "Be yourself; everyone else is already taken.", category: "Wisdom" }
-  ];
+  let quotes = [];
 
-  const quoteDisplay = document.getElementById('quoteDisplay');
-  const newQuoteButton = document.getElementById('newQuote');
+  // Load from localStorage
+  function loadQuotes() {
+    const saved = localStorage.getItem('quotes');
+    if (saved) {
+      quotes = JSON.parse(saved);
+    } else {
+      quotes = [
+        { text: "The only limit is your mind.", category: "Motivation" },
+        { text: "Be yourself; everyone else is already taken.", category: "Wisdom" }
+      ];
+      saveQuotes(); // Save defaults
+    }
+  }
 
+  // Save to localStorage
+  function saveQuotes() {
+    localStorage.setItem('quotes', JSON.stringify(quotes));
+  }
+
+  // Show a random quote
   function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const quote = quotes[randomIndex];
 
-    // ✅ Use createElement and appendChild
-    quoteDisplay.innerHTML = ''; // Clear previous quote
-    const quoteElement = document.createElement('p');
-    quoteElement.textContent = `${quote.category}: "${quote.text}"`;
-    quoteDisplay.appendChild(quoteElement);
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    quoteDisplay.innerHTML = '';
+    const p = document.createElement('p');
+    p.textContent = `${quote.category}: "${quote.text}"`;
+    quoteDisplay.appendChild(p);
+
+    // Optional: Save last quote to sessionStorage
+    sessionStorage.setItem('lastQuote', JSON.stringify(quote));
   }
 
+  // Add new quote
   function addQuote() {
-    const newQuoteText = document.getElementById('newQuoteText').value.trim();
-    const newQuoteCategory = document.getElementById('newQuoteCategory').value.trim();
+    const text = document.getElementById('newQuoteText').value.trim();
+    const category = document.getElementById('newQuoteCategory').value.trim();
 
-    if (newQuoteText && newQuoteCategory) {
-      const newQuote = { text: newQuoteText, category: newQuoteCategory };
+    if (text && category) {
+      const newQuote = { text, category };
       quotes.push(newQuote);
-
-      // ✅ Show the newly added quote using createElement + appendChild
-      quoteDisplay.innerHTML = '';
-      const quoteElement = document.createElement('p');
-      quoteElement.textContent = `${newQuote.category}: "${newQuote.text}"`;
-      quoteDisplay.appendChild(quoteElement);
-
+      saveQuotes();
+      showRandomQuote();
       document.getElementById('newQuoteText').value = '';
       document.getElementById('newQuoteCategory').value = '';
     } else {
-      alert("Please enter both quote text and category.");
+      alert('Please fill both quote and category.');
     }
   }
 
-  function createAddQuoteForm() {
-    const addButton = document.getElementById('addQuote');
-    addButton.addEventListener('click', addQuote);
+  // Export quotes as JSON
+  function exportToJson() {
+    const dataStr = JSON.stringify(quotes, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quotes.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
-  newQuoteButton.addEventListener('click', showRandomQuote);
-  createAddQuoteForm(); // Required by checker
+  // Import from JSON file
+  function importFromJsonFile(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          quotes.push(...imported);
+          saveQuotes();
+          alert('Quotes imported successfully!');
+        } else {
+          alert('Invalid JSON format.');
+        }
+      } catch {
+        alert('Error reading file.');
+      }
+    };
+    reader.readAsText(file);
+  }
 
-  showRandomQuote(); // Initial quote
+  // Event bindings
+  document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+  document.getElementById('addQuote').addEventListener('click', addQuote);
+  document.getElementById('exportJson').addEventListener('click', exportToJson);
+  document.getElementById('importFile').addEventListener('change', importFromJsonFile);
+
+  // Load quotes and show first one
+  loadQuotes();
+  showRandomQuote();
 });
