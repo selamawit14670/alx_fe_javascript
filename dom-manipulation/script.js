@@ -1,5 +1,36 @@
 let quotes = [];
 
+// Create or select notification div for messages
+function getNotificationDiv() {
+  let notifDiv = document.getElementById('notification');
+  if (!notifDiv) {
+    notifDiv = document.createElement('div');
+    notifDiv.id = 'notification';
+    notifDiv.style.position = 'fixed';
+    notifDiv.style.top = '10px';
+    notifDiv.style.right = '10px';
+    notifDiv.style.padding = '10px 20px';
+    notifDiv.style.backgroundColor = '#28a745';
+    notifDiv.style.color = 'white';
+    notifDiv.style.borderRadius = '5px';
+    notifDiv.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
+    notifDiv.style.display = 'none';
+    document.body.appendChild(notifDiv);
+  }
+  return notifDiv;
+}
+
+// Show notification message temporarily
+function showNotification(message, duration = 3000) {
+  const notifDiv = getNotificationDiv();
+  notifDiv.textContent = message;
+  notifDiv.style.display = 'block';
+
+  setTimeout(() => {
+    notifDiv.style.display = 'none';
+  }, duration);
+}
+
 // Load quotes from localStorage
 function loadQuotes() {
   const savedQuotes = localStorage.getItem('quotes');
@@ -46,26 +77,23 @@ function addQuote() {
   displayQuotes(quotes);
   postQuoteToServer(newQuote);
 
-  // Clear inputs
   textInput.value = '';
   categoryInput.value = '';
+
+  showNotification('Quote added and synced with server!');
 }
 
 // Fetch quotes from the mock server
 async function fetchQuotesFromServer() {
-  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with real or mock endpoint for quotes
+  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with actual API
   try {
     const response = await fetch(apiUrl);
     if (!response.ok) throw new Error('Network response was not ok');
     const serverQuotes = await response.json();
 
-    // Example assumes serverQuotes is an array of quote objects like {text: ..., category: ...}
-    // You may need to adjust depending on the actual API response structure
-    // Merge server quotes with local quotes, prioritizing server data:
     const mergedQuotes = [...quotes];
 
     serverQuotes.forEach(sq => {
-      // Simple merge logic: add if not already in local quotes (by text+category)
       const exists = mergedQuotes.some(
         q => q.text === sq.text && q.category === sq.category
       );
@@ -74,17 +102,22 @@ async function fetchQuotesFromServer() {
       }
     });
 
-    quotes = mergedQuotes;
-    saveQuotes();
-    displayQuotes(quotes);
+    // Check if quotes changed
+    if (JSON.stringify(quotes) !== JSON.stringify(mergedQuotes)) {
+      quotes = mergedQuotes;
+      saveQuotes();
+      displayQuotes(quotes);
+      showNotification('Quotes synced with server!');
+    }
   } catch (error) {
     console.error('Failed to fetch quotes from server:', error);
+    showNotification('Failed to sync quotes with server.', 4000);
   }
 }
 
 // Post a new quote to the mock server
 async function postQuoteToServer(quote) {
-  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with real or mock endpoint for posting
+  const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Replace with real API
 
   try {
     const response = await fetch(apiUrl, {
@@ -100,6 +133,7 @@ async function postQuoteToServer(quote) {
     console.log('Quote posted successfully:', result);
   } catch (error) {
     console.error('Failed to post quote to server:', error);
+    showNotification('Failed to post quote to server.', 4000);
   }
 }
 
@@ -108,21 +142,16 @@ function syncQuotes() {
   fetchQuotesFromServer();
 }
 
-// Periodically fetch new quotes every 5 minutes (300000 ms)
+// Periodically fetch new quotes every 5 minutes
 function startPeriodicFetch() {
-  // Fetch immediately once on start
   fetchQuotesFromServer();
-
-  // Then repeat every 5 minutes
   setInterval(fetchQuotesFromServer, 300000);
 }
 
-// Initialize app on DOM content loaded
 document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
   syncQuotes();
   startPeriodicFetch();
 });
 
-// Expose addQuote to global scope if used inline in HTML
 window.addQuote = addQuote;
