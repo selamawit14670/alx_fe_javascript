@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const quoteDisplay = document.getElementById('quoteDisplay');
   const newQuoteButton = document.getElementById('newQuote');
-  const addQuoteButton = document.getElementById('addQuote');
 
   function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
@@ -29,8 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  newQuoteButton.addEventListener('click', showRandomQuote);
-  addQuoteButton.addEventListener('click', addQuote);
+  function createAddQuoteForm() {
+    const addButton = document.getElementById('addQuote');
+    addButton.addEventListener('click', addQuote);
+  }
 
-  showRandomQuote(); // Show one on page load
+  newQuoteButton.addEventListener('click', showRandomQuote);
+  createAddQuoteForm(); // Required function name
+
+  showRandomQuote(); // Show one on load
 });
